@@ -2,7 +2,7 @@
 
 # Author: Andreas Hoehn
 # Version: 1.0
-# Date: 2024-07-25
+# Date: 2024-07-30
 # About: The main R code file of this short course
 
 # ---------------------------------------------------------------------------- #
@@ -17,11 +17,8 @@ gc(full = TRUE)  # deep clean garbage
 # set seed 
 set.seed(20240725) 
 
-# install.packages
-# install.packages("parallel")
-# install.packages("microbenchmark")
-# install.packages("tidyverse")
-# install.packages("data.table")
+# install packages if required 
+# install.packages(c("parallel","microbenchmark", "tidyverse","data.table"))
 
 # libraries
 library(parallel)

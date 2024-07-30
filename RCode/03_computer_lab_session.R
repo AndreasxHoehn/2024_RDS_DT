@@ -2,7 +2,7 @@
 
 # Author: Andreas Hoehn
 # Version: 1.0
-# Date: 2024-07-23
+# Date: 2024-07-30
 # About: The main R code file of this short course
 
 # ---------------------------------------------------------------------------- #
@@ -23,9 +23,9 @@
 dt_base   <- data.table::fread("RData/dt_base.csv")
 dt_grades <- data.table::fread("RData/dt_grades.csv")
 
-# how do they look?
-dt_base
-dt_grades
+# how do they look? --> very similar to base R's data.frame actually!
+dt_base    # this is a baseline table of pupils leaving school
+dt_grades  # this is a merge-in observation table with final exam grades
 
 # how do they merge? The basic R merge performs quite well!
 dt_base_grades <- base::merge(x  = dt_base,
@@ -40,8 +40,11 @@ dt_base_grades
 
 # [1.2] Benchmarking time
 
-# loading a data set is straightforward - but lets benchmark it!
-# we work with microbenchmark::microbenchmark for this purpose
+# Loading a data set is straightforward - but lets benchmark it!
+# We work with microbenchmark::microbenchmark for this purpose.
+# Please note that we load the dataset, but don't assign it to a new object.
+# This is to not further pollute our workspace. Super fast functions for 
+# basic operations is one of the many key advantages data.table comes with.
 
 # via base R
 microbenchmark::microbenchmark(
@@ -62,6 +65,10 @@ microbenchmark::microbenchmark(
 
 # [1.2] Benchmarking memory (RAM)
 
+# Before we dive into data.table, we will learn how to benchmark the size 
+# of objects to identify bottle necks. This is a basic skill very useful, 
+# no matter which R dialect you are working in.
+
 # let's look at our object - can the same information be saved differently?
 dt_base
 
@@ -69,14 +76,20 @@ dt_base
 format(object.size(dt_base), unit = "Mb")    # ~ 19MB in RAM
 
 # Can we reduce the dataset?
-# convert id from numeric with integer as there is no need for decimals
-# we do this with the basic data.table operator " := " which is "assignment by reference"
+# Convert id from numeric with integer as there is no need for decimals
+# We do this with the basic data.table operator " := " which is "assignment by reference"
 dt_base[, id    := as.integer(id)]
 format(object.size(dt_base), unit = "Mb")   # ~ 15MB in RAM
 
 # ------------- # 
 
 # [1.3] Tracing the Location of Objects within Memory (RAM)
+
+# The data.tables way of using memory and assigning by reference is one of 
+# the key reason it operates so fast and memory efficient. We can actually 
+# trace any change of addresses in memory. Tracing changes in location is a 
+# basic skill. It can help you to identify cases in which, for example,
+# working memory is put under stress unnecessarily.
 
 # this returns the address of the object 
 tracemem(dt_base)
@@ -93,7 +106,12 @@ tracemem(dt_base)  == tracemem(dt_base)  # still no change in location!
 dt_base$new_var <- 99    # tracemem flags changes in location right away
 tracemem(dt_base)
 
-# !TASK!: does this also happen with "%>%s" ?
+# !TASK!: Can we sho that this will also happen with "%>%s" ? 
+
+
+# ( .. actually, tidyverse pipes are notoriously bad in this regard. Almost 
+# every time we use a pipe, we change the location in memory - potentially 
+# juggling large amounts of data unncessarily around within our memory.)
 
 
 # lets turn tracing off again
@@ -114,7 +132,8 @@ base::untracemem(dt_base)
 # [2.1] How do we subset?
 
 # the standard format for all commands is "data[subset, execute]"
-# internal subsets will not alter the object!
+# internal subsets will not alter the object - unless assigned to a 
+# new object
 
 # let's have a look at our dataset again
 dt_base_grades
@@ -129,10 +148,11 @@ dt_base_grades
 
 
 # subset and assign to a new object which will appear in the work space
-# subsets will become permanent  if assigned to a new object (or the old object)
+# subsets will become permanent if assigned to a new object (or the old object)
 dt_base_grades_f <- dt_base_grades[males == 0, ]
 dt_base_grades_f # a new object in which the subset of the old object is stored 
-                 # old object will remain unchanged
+                 # old object will remain unchanged. As it's a subset of an 
+                 # object it get's a new address in memory.
 
 # ------------- # 
 
@@ -146,10 +166,6 @@ dt_base_grades_f # a new object in which the subset of the old object is stored
 dt_base_grades
 dt_base_grades[, took_both := as.integer(1)]
 dt_base_grades # everybody took the exam
-
-# note: location in memory has not changed!
-# try "tracemem(dt_base_grades)" before and after
-# also compare with location after running "dt_base_grades$took_both <- as.integer(1)"
 
 # recode with subset: not everybody passed the exams (means)
 dt_base_grades[, passed_both := as.integer(0)]           # initialise 
@@ -181,9 +197,10 @@ dt_base_grades[passed_both == 1, .(num_identified = .N)]
 # aggregating and returning for multiple groups separately can get tedious ... 
 dt_base_grades[passed_both == 1, .(num_identified = .N)] # how many passed?
 dt_base_grades[passed_both == 0, .(num_identified = .N)] # how many did not pass?
+# Solution: aggregate and return by group ...
 
-# solution: aggregate and return by group
-# the standard format then changes to "data[subset, execute, by]"
+# When executing commands by group, the standard format changes to:
+# "data[subset, execute, by]"
 dt_base_grades[, .(num_identified = .N), by = c("passed_both")] # how many did/ did not pass?
 
 # solution: aggregate and return for multiple groups
@@ -239,7 +256,7 @@ dt_grades
 
 # a data.table assignment does NOT create a deep copy 
 dt_grades[, col_c := 999]
-dt_grades2 <- dt_grades
+dt_grades2 <- dt_grades     # assignment without subset
 
 # column appears in both
 dt_grades
@@ -256,9 +273,13 @@ dt_grades2
 dt_grades
 
 # only a deep copy can resolve that
-dt_grades3 <- copy(dt_grades)
+dt_grades3 <- data.table::copy(dt_grades)
 tracemem(dt_grades)
 tracemem(dt_grades3) 
+
+# this can become a problem when working in functions. It is therefore recommended
+# to create a deep-copy of an input object with data.table::copy() when creating 
+# new objects within functions that are based on the input object
 
 # ---------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------- #
