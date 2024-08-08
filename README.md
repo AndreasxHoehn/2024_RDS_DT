@@ -17,7 +17,7 @@ a GitHub user, you can alternatively fork this repository.
 *"Slides/":* contains all slides either in power point or PDF format.
 
 *"RData/":* contains our example data sets - a simulated baseline cohort of N = 1,000,000 capturing some basic demographic 
-information, alongside a separate file containing file exam grades for the baseline cohort. The creation of the dataset is 
+information, alongside a separate file containing exam grades for the baseline cohort. The creation of the dataset is 
 fully documented in the folder "RCode/02_create_data.R". Please note that the dataset was already created and that it is not 
 required to re-create it.
 
