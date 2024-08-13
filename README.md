@@ -14,21 +14,21 @@ This folder contains all course materials for the course in Edinburgh on 15/08/2
 All materials can be downloaded as a bundled zip folder. You do not need a GitHub account to download materials. If you are 
 a GitHub user, you can alternatively fork this repository.
 
-*"Slides/":* contains all slides either in power point or PDF format.
+`Slides/`: contains all slides either in power point or PDF format.
 
-*"RData/":* contains our example data sets - a simulated baseline cohort of N = 1,000,000 capturing some basic demographic 
+`RData/`: contains our example data sets - a simulated baseline cohort of N = 1,000,000 capturing some basic demographic 
 information, alongside a separate file containing exam grades for the baseline cohort. The creation of the dataset is 
-fully documented in the folder "RCode/02_create_data.R". Please note that the dataset was already created and that it is not 
+fully documented in the folder `RCode/02_create_data.R`. Please note that the dataset was already created and that it is not 
 required to re-create it.
 
-*"RCode/":* contains all R code files in a reproducible pipeline format. 
+`RCode/`: contains all R code files in a reproducible pipeline format. 
 
 
 ## Running the Pipeline 
 
-In order to run the pipeline, please open R-studio in project mode (double click on "2024_RDS_DT.Rproj" in the overarching folder). 
-You can then open "RCode/01_main.R" to run all pre-requisits up to Line 40. It is then recommended to switch to open and run 
-"RCode/03_computer_lab_session.R" and go through the examples step by step. 
+In order to run the pipeline, please open R-studio in project mode (double click on `2024_RDS_DT.Rproj` in the overarching folder). 
+You can then open `RCode/01_main.R` to run all pre-requisits up to Line 40. It is then recommended to switch to open and run 
+`RCode/03_computer_lab_session.R` and go through the examples step by step. 
 
 
 ## Feedback and Inquiries 
