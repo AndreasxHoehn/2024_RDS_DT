@@ -2,8 +2,8 @@
 
 # Author: Andreas Hoehn
 # Version: 1.0
-# Date: 2024-07-30
-# About: The main R code file of this short course
+# Date: 2024-08-14
+# About: The main R code file of this course
 
 # ---------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------- #
@@ -13,6 +13,7 @@
 # [1.1] What is a data.table?
 # [1.2] Benchmarking time
 # [1.3] Benchmarking memory 
+# [1.4] Benchmarking memory 
 
 # ------------- # 
 
@@ -28,9 +29,9 @@ dt_base    # this is a baseline table of pupils leaving school
 dt_grades  # this is a merge-in observation table with final exam grades
 
 # how do they merge? The basic R merge performs quite well!
-dt_base_grades <- base::merge(x  = dt_base,
-                              y  = dt_grades,
-                              by = c("id"))
+dt_base_grades <- merge(x  = dt_base,
+                        y  = dt_grades,
+                        by = c("id"))
 dt_base_grades
 
 # or if you want it even faster: dt_base_grades <- dt_base[dt_grades, on = "id"]
@@ -56,14 +57,14 @@ microbenchmark::microbenchmark(
   readr::read_csv(file = "RData/dt_base.csv", show_col_types = FALSE),
   unit = "seconds", times = 1) 
 
-# via the data.table function
+# via the data.table function (for me this takes 2% of the tidyverse time!)
 microbenchmark::microbenchmark(
   data.table::fread(file = "RData/dt_base.csv"),
   unit = "seconds", times = 1) 
 
 # ------------- # 
 
-# [1.2] Benchmarking memory (RAM)
+# [1.3] Benchmarking memory (RAM)
 
 # Before we dive into data.table, we will learn how to benchmark the size 
 # of objects to identify bottle necks. This is a basic skill very useful, 
@@ -75,7 +76,7 @@ dt_base
 # how large is our object to start with
 format(object.size(dt_base), unit = "Mb")    # ~ 19MB in RAM
 
-# Can we reduce the dataset?
+# Can we reduce the dataset without loosing any information?
 # Convert id from numeric with integer as there is no need for decimals
 # We do this with the basic data.table operator " := " which is "assignment by reference"
 dt_base[, id    := as.integer(id)]
@@ -83,7 +84,7 @@ format(object.size(dt_base), unit = "Mb")   # ~ 15MB in RAM
 
 # ------------- # 
 
-# [1.3] Tracing the Location of Objects within Memory (RAM)
+# [1.4] Tracing the Location of Objects within Memory (RAM)
 
 # The data.tables way of using memory and assigning by reference is one of 
 # the key reason it operates so fast and memory efficient. We can actually 
@@ -91,14 +92,14 @@ format(object.size(dt_base), unit = "Mb")   # ~ 15MB in RAM
 # basic skill. It can help you to identify cases in which, for example,
 # working memory is put under stress unnecessarily.
 
-# this returns the address of the object 
+# this returns the address of the object and starts a tracker
 tracemem(dt_base)
 
 # let's create a new variable 
 dt_base[, new_var := 99]
 tracemem(dt_base)  # no change in location!
 
-# we can even create a new dataset
+# we can even create a new dataset without any subset 
 dt_base2 <- dt_base
 tracemem(dt_base)  == tracemem(dt_base)  # still no change in location!
 
@@ -106,13 +107,12 @@ tracemem(dt_base)  == tracemem(dt_base)  # still no change in location!
 dt_base$new_var <- 99    # tracemem flags changes in location right away
 tracemem(dt_base)
 
-# !TASK!: Can we sho that this will also happen with "%>%s" ? 
+# !TASK!: What happens when we use a pipe "%>%s" for this command? 
 
 
 # ( .. actually, tidyverse pipes are notoriously bad in this regard. Almost 
-# every time we use a pipe, we change the location in memory - potentially 
-# juggling large amounts of data unncessarily around within our memory.)
-
+# every time we use a pipe, we change the location in memory - means 
+# juggling large amounts of data within our memory.)
 
 # lets turn tracing off again
 base::untracemem(dt_base)
@@ -162,24 +162,26 @@ dt_base_grades_f # a new object in which the subset of the old object is stored
 # with data.table, new variables are created using the ":=" operation
 # it's an assignment by reference - we already know what this means
 
-# recode without subset: everybody took the exams 
+# recode without subset: we know that everybody took the exams 
 dt_base_grades
 dt_base_grades[, took_both := as.integer(1)]
 dt_base_grades # everybody took the exam
 
-# recode with subset: not everybody passed the exams (means)
-dt_base_grades[, passed_both := as.integer(0)]           # initialise 
+# recode with subset: However, not everybody passed both exams 
+dt_base_grades[, passed_both := as.integer(0)]              # initialise default
 dt_base_grades[exam_1 == 1 & exam_2 == 1, passed_both := 1]
+# data.table supports fast 'ifelse()' statements, which can further boost speed
 
 # !TASK!: recode with subset - new variable for those who passed only the first
 # ....
 
 # ------------- # 
 
-# [2.3] How do I aggregate and return columns?
+# [2.3] How do I aggregate and return columns? The , ".SD" and ".()" and .N commands
 
 # some basic return and assignment
 # reminder: the standard format for all commands is "data[subset, execute]"
+dt_base_grades[, .SD]                                       # shortcut for all columns 
 dt_base_grades[, .(median(bday))]                           # return the median of a variable
 dt_base_grades[, .(median_bday = median(bday))]             # return the median of a variable with new col name
 result_1 <- dt_base_grades[, .(median_bday = median(bday))] # return the median of a variable with new col name

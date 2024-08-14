@@ -2,7 +2,7 @@
 
 # Author: Andreas Hoehn
 # Version: 1.0
-# Date: 2024-07-30
+# Date: 2024-08-14
 # About: This file simulates us some data on final exams 
 
 # ---------------------------------------------------------------------------- #
