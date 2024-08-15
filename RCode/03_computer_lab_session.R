@@ -52,7 +52,7 @@ microbenchmark::microbenchmark(
   read.csv(file = "RData/dt_base.csv"),
   unit = "seconds", times = 1) 
 
-# via the tidyverse
+# via the tidyverse (half the time of base R!)
 microbenchmark::microbenchmark(
   readr::read_csv(file = "RData/dt_base.csv", show_col_types = FALSE),
   unit = "seconds", times = 1) 
@@ -101,7 +101,7 @@ tracemem(dt_base)  # no change in location!
 
 # we can even create a new dataset without any subset 
 dt_base2 <- dt_base
-tracemem(dt_base)  == tracemem(dt_base)  # still no change in location!
+tracemem(dt_base)  == tracemem(dt_base2)  # still no change in location!
 
 # let's create a new variable the base R way!
 dt_base$new_var <- 99    # tracemem flags changes in location right away
@@ -139,9 +139,10 @@ base::untracemem(dt_base)
 dt_base_grades
 
 # subset (internal only, no new object is created, data object unchanged)
-dt_base_grades[id == 1, ]              # subset where id is "1"
-dt_base_grades[males == 0, ]           # subset where its a female 
-dt_base_grades[id %in% dt_grades$id, ] # comparison with vectors: subset id match
+dt_base_grades[id == 1, ]                 # subset where id is "1"
+dt_base_grades[males == 0, ]              # subset where its a female 
+dt_base_grades[id %in% dt_grades$id, ]    # comparison with vectors: subset matched
+dt_base_grades[!(id %in% dt_grades$id), ] # comparison with vectors: subset not matched
 dt_base_grades                         
 
 # !TASK!: Subset - born in 21st century?
@@ -186,7 +187,7 @@ dt_base_grades[, .(median(bday))]                           # return the median 
 dt_base_grades[, .(median_bday = median(bday))]             # return the median of a variable with new col name
 result_1 <- dt_base_grades[, .(median_bday = median(bday))] # return the median of a variable with new col name
 
-# subsetting, aggregating and returning: how many passed?   --> ".N" is the fast count!
+# subsetting, aggregating and returning: how many passed both?   --> ".N" is the fast count!
 dt_base_grades[passed_both == 1, .(num_identified = .N)] 
 
 # !TASK!: subsetting, aggregating and returning --> how many females passed both?
@@ -225,13 +226,15 @@ dt_base_grades[, .(num_identified = .N), by = c("passed_both", "males")]
 
 # [3.1] from wide to long
 
-# this is classic wide format, quite often saving things in long format is more efficient
+# this is classic wide format, quite often saving things in long format is better
+# for example - when storing databases, time-updated joins, statistical analysis etc. 
 dt_grades_long <- data.table::melt(data = dt_grades, id.vars = c("id"))
+# let's have a look at the new object
 
 # keying a data.table sorts the data rapidly
 setkey(dt_grades_long, id)
 
-# watch out - reshaping can create larger objects as an additional column is required 
+# watch out - reshaping can create larger objects ! 
 format(object.size(dt_grades), unit = "Mb")
 format(object.size(dt_grades_long), unit = "Mb")
 
@@ -248,7 +251,7 @@ dt_grades_wide <- data.table::dcast(data = dt_grades_long,
                                     formula = id ~ variable,
                                     value.var = c("value"))
 
-dt_grades_wide  # they are both the same 
+dt_grades_wide  # they are both the same again!
 dt_grades       
 
 # ---------------------------------------------------------------------------- #
